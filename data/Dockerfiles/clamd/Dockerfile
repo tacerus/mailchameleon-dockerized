@@ -1,21 +1,19 @@
-FROM clamav/clamav:0.105.1_base
+FROM bci/bci-base:latest
 
-LABEL maintainer "André Peters <andre.peters@servercow.de>"
+LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
-RUN apk upgrade --no-cache \
-  && apk add --update --no-cache \
+COPY clamd.sh /usr/local/sbin/clamd.sh
+COPY clamdcheck.sh /usr/local/bin/clamdcheck.sh
+
+RUN set -eu ; \
+  zypper -n in \
   rsync \
-  bind-tools \
-  bash 
+  bind-utils \
+  clamav ; \
+	chmod +x /usr/local/bin/clamdcheck.sh
 
-# init
-COPY clamd.sh /clamd.sh
-RUN chmod +x /sbin/tini
+HEALTHCHECK --start-period=6m CMD "/usr/local/bin/clamdcheck.sh"
 
-# healthcheck
-COPY healthcheck.sh /healthcheck.sh
-RUN chmod +x /healthcheck.sh
-HEALTHCHECK --start-period=6m CMD "/healthcheck.sh"
+ENTRYPOINT ["/usr/local/sbin/clamd.sh"]
 
-ENTRYPOINT []
-CMD ["/sbin/tini", "-g", "--", "/clamd.sh"]
+CMD ["/usr/sbin/clamd", "-F"]
