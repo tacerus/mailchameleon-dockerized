@@ -1,23 +1,22 @@
-FROM alpine:3.16
+FROM bci/bci-base:latest
 
-LABEL maintainer "Andre Peters <andre.peters@servercow.de>"
+LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
-RUN apk add --update --no-cache \
-	curl \
-	unbound \
-	bash \
-	openssl \
-	drill \
-	tzdata \
-	&& curl -o /etc/unbound/root.hints https://www.internic.net/domain/named.cache \
-	&& chown root:unbound /etc/unbound \
-  && adduser unbound tty \
-	&& chmod 775 /etc/unbound
+COPY unbound-nobloat.expect /tmp/install
+
+RUN set -eu ; \
+	zypper al systemd sudo ; \
+	zypper -n ar https://download.opensuse.org/repositories/home:/crameleon:/LibertaCasa:/Mail/15.4/home:crameleon:LibertaCasa:Mail.repo ; \
+	zypper --gpg-auto-import-keys -n ref ; \ 
+	zypper -n in expect ; \
+	expect /tmp/install ; rm /tmp/install ; \
+	zypper -n clean -a ; \
+	mkdir /hooks
 
 EXPOSE 53/udp 53/tcp
 
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY entrypoint.sh /usr/local/sbin/entrypoint.sh
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]
 
-CMD ["/usr/sbin/unbound"]
+CMD ["/usr/sbin/unbound", "-dv"]
