@@ -384,12 +384,12 @@ chmod +x /usr/lib/dovecot/sieve/rspamd-pipe-ham \
 printenv | sed 's/^\(.*\)$/export \1/g' > /source_env.sh
 
 # Clean old PID if any
-[[ -f /var/run/dovecot/master.pid ]] && rm /var/run/dovecot/master.pid
+[[ -f /run/dovecot/master.pid ]] && rm /run/dovecot/master.pid
 
 # Clean stopped imapsync jobs
 rm -f /tmp/imapsync_busy.lock
 IMAPSYNC_TABLE=$(mysql --socket=/var/run/mysqld/mysqld.sock -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "SHOW TABLES LIKE 'imapsync'" -Bs)
-[[ ! -z ${IMAPSYNC_TABLE} ]] && mysql --socket=/var/run/mysqld/mysqld.sock -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "UPDATE imapsync SET is_running='0'"
+[[ ! -z ${IMAPSYNC_TABLE} ]] && mysql --socket=/run/mysqld/mysqld.sock -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "UPDATE imapsync SET is_running='0'"
 
 # Envsubst maildir_gc
 echo "$(envsubst < /usr/local/bin/maildir_gc.sh)" > /usr/local/bin/maildir_gc.sh
@@ -427,9 +427,5 @@ for file in /hooks/*; do
     "${file}"
   fi
 done
-
-# For some strange, unknown and stupid reason, Dovecot may run into a race condition, when this file is not touched before it is read by dovecot/auth
-# May be related to something inside Docker, I seriously don't know
-touch /etc/dovecot/lua/passwd-verify.lua
 
 exec "$@"

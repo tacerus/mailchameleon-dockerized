@@ -1,0 +1,23 @@
+#!/usr/bin/expect -f
+# remove this hacky script once package is patched
+
+set timeout 10
+spawn zypper in --no-recommends syslog-ng dovecot23 supervisor
+expect {
+  -re {^.* Solution (\d): (?:break)} {
+    set solution "$expect_out(1,string)"
+    exp_continue
+  }
+  "Choose from above solutions by number or cancel" {
+   #puts "$solution"
+   send "$solution\r"
+   exp_continue
+  }
+  "Continue?" {
+   send "y\r"
+   exp_continue
+  }
+  "Installing:" { exp_continue }
+  eof {}
+}
+
