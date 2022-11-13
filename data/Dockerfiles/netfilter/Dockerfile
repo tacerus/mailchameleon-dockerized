@@ -1,30 +1,12 @@
-FROM alpine:3.16
-LABEL maintainer "Andre Peters <andre.peters@servercow.de>"
+FROM bci/python:latest
 
-ENV XTABLES_LIBDIR /usr/lib/xtables
-ENV PYTHON_IPTABLES_XTABLES_VERSION 12
-ENV IPTABLES_LIBDIR /usr/lib
+LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
-RUN apk add --virtual .build-deps \
-  gcc \
-  python3-dev \
-  libffi-dev \
-  openssl-dev \
-&& apk add -U python3 \
-  iptables \
-  ip6tables \
-  xtables-addons \
-  tzdata \
-  py3-pip \
-  musl-dev \
-&& pip3 install --ignore-installed --upgrade pip \
-  python-iptables \
-  redis \
-  ipaddress \
-  dnspython \
-&& apk del .build-deps
+RUN set -eu ; \
+	zypper ar https://download.opensuse.org/repositories/home:/crameleon:/LibertaCasa/15.4/home:crameleon:LibertaCasa.repo ; \
+	zypper --gpg-auto-import-keys -n ref ; \
+	zypper -n in iptables python310-iptables python310-redis python310-dnspython ; \
+	zypper -n clean -a
 
-#  && pip3 install --upgrade pip python-iptables==0.13.0 redis ipaddress dnspython \
-
-COPY server.py /
-CMD ["python3", "-u", "/server.py"]
+COPY server.py /usr/local/bin/
+CMD ["python3", "-u", "/usr/local/bin/server.py"]
