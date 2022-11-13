@@ -1,18 +1,13 @@
-FROM alpine:3.16
+FROM bci/python:latest
 
-LABEL maintainer "Andre Peters <andre.peters@servercow.de>"
+LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
-WORKDIR /app
+RUN set -eu ; \
+	zypper ar https://download.opensuse.org/repositories/home:/crameleon:/LibertaCasa/15.4/home:crameleon:LibertaCasa.repo ; \
+	zypper --gpg-auto-import-keys -n ref ; \
+	zypper -n in --no-recommends docker python310-docker python310-Flask python310-Flask-RESTful ; \
+	zypper -n clean -a
 
-RUN apk add --update --no-cache python3 \
-  py3-pip \
-  openssl \
-  tzdata \
-&& pip3 install --upgrade pip \
-  docker \
-  flask \
-  flask-restful
+COPY dockerapi.py /usr/local/bin/
 
-COPY dockerapi.py /app/
-
-CMD ["python3", "-u", "/app/dockerapi.py"]
+CMD ["python3", "-u", "/usr/local/bin/dockerapi.py"]
