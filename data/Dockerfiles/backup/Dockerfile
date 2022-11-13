@@ -1,3 +1,3 @@
-FROM debian:bullseye-slim
+FROM bci/bci-base:latest
 
-RUN apt update && apt install pigz
+RUN zypper -n in pigz
