@@ -1,21 +1,18 @@
-FROM alpine:3.16
-LABEL maintainer "Andre Peters <andre.peters@servercow.de>"
+FROM bci/python:latest
 
-WORKDIR /app
+LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
-#RUN addgroup -S olefy && adduser -S olefy -G olefy \
-RUN apk add --virtual .build-deps gcc musl-dev python3-dev libffi-dev openssl-dev cargo \
-  && apk add --update --no-cache python3 py3-pip openssl tzdata libmagic \
-  && pip3 install --upgrade pip \
-  && pip3 install --upgrade asyncio python-magic \
-  && pip3 install --upgrade https://github.com/decalage2/oletools/archive/master.zip \
-  && apk del .build-deps
-#  && sed -i 's/template_injection_detected = True/template_injection_detected = False/g' /usr/lib/python3.9/site-packages/oletools/olevba.py
+COPY olefy.py /usr/local/bin/
 
-ADD olefy.py /app/
+RUN set -eu ; \
+	zypper ar https://download.opensuse.org/repositories/home:/crameleon:/LibertaCasa/15.4/home:crameleon:LibertaCasa.repo ; \
+	zypper --gpg-auto-import-keys -n ref ; \
+	zypper -n in python310-magic python310-oletools; \
+	zypper -n clean -a ; \
+	useradd -rUd /var/lib/empty -s /sbin/nologin olefy ; \
+	chown olefy:olefy /usr/local/bin/olefy.py
 
-RUN chown -R nobody:nobody /app /tmp
 
-USER nobody
+USER olefy
 
-CMD ["python3", "-u", "/app/olefy.py"]
+CMD ["python3", "-u", "/usr/local/bin/olefy.py"]

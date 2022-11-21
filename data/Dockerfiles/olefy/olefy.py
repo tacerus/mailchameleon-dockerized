@@ -36,8 +36,8 @@ import re
 olefy_listen_addr_string = os.getenv('OLEFY_BINDADDRESS', '127.0.0.1,::1')
 olefy_listen_port = int(os.getenv('OLEFY_BINDPORT', '10050'))
 olefy_tmp_dir = os.getenv('OLEFY_TMPDIR', '/tmp')
-olefy_python_path = os.getenv('OLEFY_PYTHON_PATH', '/usr/bin/python3')
-olefy_olevba_path = os.getenv('OLEFY_OLEVBA_PATH', '/usr/local/bin/olevba3')
+olefy_python_path = os.getenv('OLEFY_PYTHON_PATH', '/usr/bin/python3.10')
+olefy_olevba_path = os.getenv('OLEFY_OLEVBA_PATH', '/usr/bin/olevba')
 # 10:DEBUG, 20:INFO, 30:WARNING, 40:ERROR, 50:CRITICAL
 olefy_loglvl = int(os.getenv('OLEFY_LOGLVL', 20))
 olefy_min_length = int(os.getenv('OLEFY_MINLENGTH', 500))
