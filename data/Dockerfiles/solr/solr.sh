@@ -18,29 +18,53 @@ fi
 
 set -e
 
-# run the optional initdb
-. /opt/docker-solr/scripts/run-initdb
+solrenv='/etc/solr/solr.in.sh'
+solrenv2="$solrenv.local"
+solrconfdir='/usr/share/solr/server/solr/configsets/_default/conf'
+datadir='/var/lib/solr/dovecot-fts'
+logdir='/var/log/solr'
+solrbin='/usr/bin/solr'
 
-# fixing volume permission
-[[ -d /opt/solr/server/solr/dovecot-fts/data ]] && chown -R solr:solr /opt/solr/server/solr/dovecot-fts/data
+echo 'SOLR_HEAP=' > "$solrenv2"
 if [[ "${1}" != "--bootstrap" ]]; then
-  sed -i '/SOLR_HEAP=/c\SOLR_HEAP="'${SOLR_HEAP:-1024}'m"' /opt/solr/bin/solr.in.sh
+  sed '/SOLR_HEAP=/c\SOLR_HEAP="'${SOLR_HEAP:-1024}'m"' "$solrenv2" > /tmp/heapenv
 else
-  sed -i '/SOLR_HEAP=/c\SOLR_HEAP="256m"' /opt/solr/bin/solr.in.sh
+  sed '/SOLR_HEAP=/c\SOLR_HEAP="256m"' "$solrenv2" > /tmp/heapenv
 fi
+cat /tmp/heapenv > "$solrenv2"
+rm /tmp/heapenv
+
+echo "Preparing Solr environment ..."
+set -a
+. "$solrenv"
+. "$solrenv2"
+SOLR_SERVER_DIR="$SOLR_SERVER_DIR/server"
+unset LOG4J_PROPS
+set +a
 
 if [[ "${1}" == "--bootstrap" ]]; then
   echo "Creating initial configuration"
+
   echo "Modifying default config set"
-  cp /solr-config-7.7.0.xml /opt/solr/server/solr/configsets/_default/conf/solrconfig.xml
-  cp /solr-schema-7.7.0.xml /opt/solr/server/solr/configsets/_default/conf/schema.xml
-  rm /opt/solr/server/solr/configsets/_default/conf/managed-schema
+  cp /etc/solr/solr-config-7.7.0.xml "$solrconfdir/solrconfig.xml"
+  cp /etc/solr/solr-schema-7.7.0.xml "$solrconfdir/schema.xml"
+  rm "$solrconfdir/managed-schema"
+
+  # hacks; to-do
+  echo "Modifying Solr binary ..."
+  sed -i -e '/CMS/d' -e '/UseConcMarkSweepGC/d' -e '/SOLR_TIP=`dirname/d' -e 's?SOLR_TIP=`cd.*?SOLR_TIP="/usr/share/solr"?' "$solrbin"
 
   echo "Starting local Solr instance to setup configuration"
-  gosu solr start-local-solr
+  $solrbin start -v -V -force
+
+  until solr status
+  do
+	  echo "Waiting for Solr to get ready ..."
+	  sleep 5s
+  done
 
   echo "Creating core \"dovecot-fts\""
-  gosu solr /opt/solr/bin/solr create -c "dovecot-fts"
+  $solrbin create -c dovecot-fts -p 8983 -V -force
 
   # See https://github.com/docker-solr/docker-solr/issues/27
   echo "Checking core"
@@ -52,10 +76,15 @@ if [[ "${1}" == "--bootstrap" ]]; then
   echo "Created core \"dovecot-fts\""
 
   echo "Stopping local Solr"
-  gosu solr stop-local-solr
+  $solrbin stop -p 8983 -V
+
+  echo "Setting permissions"
+  chown -R solr "$datadir"
+  chown -R solr "$logdir"
+  chown solr "$solrenv2"
 
   exit 0
 fi
 
-exec gosu solr solr-foreground
+exec $solrbin start -f
 

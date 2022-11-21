@@ -1,30 +1,19 @@
-FROM solr:7.7-slim
+FROM bci/bci-base:latest
 
-USER root
+LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
-ENV GOSU_VERSION 1.11
+COPY solr.sh /usr/local/sbin/
+COPY solr-config-7.7.0.xml /etc/solr/
+COPY solr-schema-7.7.0.xml /etc/solr/
 
-COPY solr.sh /
-COPY solr-config-7.7.0.xml /
-COPY solr-schema-7.7.0.xml /
-
-RUN dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
-  && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" \
-  && chmod +x /usr/local/bin/gosu \
-  && gosu nobody true \
-  && apt-get update && apt-get install -y --no-install-recommends \
-  tzdata \
-  curl \
-  bash \
-  zip \
-  && apt-get autoclean \
-  && rm -rf /var/lib/apt/lists/* \
-  && chmod +x /solr.sh \
-  && sync \
-  && bash /solr.sh --bootstrap
+RUN set -eu ; \
+	zypper -n ar https://download.opensuse.org/repositories/home:/lrupp/15.4/home:lrupp.repo ; \
+	zypper --gpg-auto-import-keys -n ref ; \
+	zypper -n in solr wget lsof awk ; \
+	zypper -n clean -a ; \
+	chmod +x /usr/local/sbin/solr.sh ; \
+        touch /etc/solr/solr.in.sh.local ; \
+	/usr/local/sbin/solr.sh --bootstrap
   
-RUN zip -q -d /opt/solr/server/lib/ext/log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
-
-RUN apt remove zip -y  
-
-CMD ["/solr.sh"]
+USER solr
+CMD ["/usr/local/sbin/solr.sh"]
