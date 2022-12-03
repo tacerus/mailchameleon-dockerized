@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 # Wait for MySQL to warm-up
 while ! mysqladmin status --socket=/var/run/mysqld/mysqld.sock -u${DBUSER} -p${DBPASS} --silent; do
@@ -128,11 +128,10 @@ EOF
   done
 fi
 
-# cat /dev/urandom seems to hang here occasionally and is not recommended anyway, better use openssl
 RAND_PASS=$(openssl rand -base64 16 | tr -dc _A-Z-a-z-0-9)
 
 # Generate plist header with timezone data
-mkdir -p /var/lib/sogo/GNUstep/Defaults/
+mkdir /var/lib/sogo/GNUstep/Defaults/
 cat <<EOF > /var/lib/sogo/GNUstep/Defaults/sogod.plist
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//GNUstep//DTD plist 0.9//EN" "http://www.gnustep.org/plist-0_9.xml">
@@ -221,31 +220,9 @@ echo '    </dict>
 </dict>
 </plist>' >> /var/lib/sogo/GNUstep/Defaults/sogod.plist
 
-# Fix permissions
-chown sogo:sogo -R /var/lib/sogo/
 chmod 600 /var/lib/sogo/GNUstep/Defaults/sogod.plist
-
-# Patch ACLs
-#if [[ ${ACL_ANYONE} == 'allow' ]]; then
-#  #enable any or authenticated targets for ACL
-#  if patch -R -sfN --dry-run /usr/lib/GNUstep/SOGo/Templates/UIxAclEditor.wox < /acl.diff > /dev/null; then
-#    patch -R /usr/lib/GNUstep/SOGo/Templates/UIxAclEditor.wox < /acl.diff;
-#  fi
-#else
-#  #disable any or authenticated targets for ACL
-#  if patch -sfN --dry-run /usr/lib/GNUstep/SOGo/Templates/UIxAclEditor.wox < /acl.diff > /dev/null; then
-#    patch /usr/lib/GNUstep/SOGo/Templates/UIxAclEditor.wox < /acl.diff;
-#  fi
-#fi
 
 # Copy logo, if any
 [[ -f /etc/sogo/sogo-full.svg ]] && cp /etc/sogo/sogo-full.svg /usr/lib/GNUstep/SOGo/WebServerResources/img/sogo-full.svg
 
-# Rsync web content
-echo "Syncing web content with named volume"
-rsync -a /usr/lib/GNUstep/SOGo/. /sogo_web/
-
-# Chown backup path
-chown -R sogo:sogo /sogo_backup
-
-exec gosu sogo /usr/sbin/sogod
+exec /usr/sbin/sogod

@@ -18,4 +18,11 @@ for file in /hooks/*; do
   fi
 done
 
+# Rsync web content
+echo "Syncing web content with named volume"
+rsync -a /usr/lib64/GNUstep/SOGo/. /sogo_web/
+
+# Chown backup path
+chown -R sogo:sogo /sogo_backup
+
 exec "$@"
