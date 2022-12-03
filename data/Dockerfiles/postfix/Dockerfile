@@ -1,42 +1,14 @@
-FROM debian:bullseye-slim
-LABEL maintainer "Andre Peters <andre.peters@servercow.de>"
+FROM bci/bci-base:latest
 
-ARG DEBIAN_FRONTEND=noninteractive
-ENV LC_ALL C
+LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
-RUN dpkg-divert --local --rename --add /sbin/initctl \
-	&& ln -sf /bin/true /sbin/initctl \
-	&& dpkg-divert --local --rename --add /usr/bin/ischroot \
-	&& ln -sf /bin/true /usr/bin/ischroot
-
-# Add groups and users before installing Postfix to not break compatibility
-RUN groupadd -g 102 postfix \
-  && groupadd -g 103 postdrop \
-  && useradd -g postfix -u 101 -d /var/spool/postfix -s /usr/sbin/nologin postfix \
-  && apt-get update && apt-get install -y --no-install-recommends \
-	ca-certificates \
-	curl \
-	dirmngr \
-  dnsutils \
-	gnupg \
-	libsasl2-modules \
-  mariadb-client \
-	perl \
-	postfix \
-	postfix-mysql \
-	postfix-pcre \
-	redis-tools \
-	sasl2-bin \
-	sudo \
-	supervisor \
-	syslog-ng \
-	syslog-ng-core \
-	syslog-ng-mod-redis \
-  tzdata \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& touch /etc/default/locale \
-  && printf '#!/bin/bash\n/usr/sbin/postconf -c /opt/postfix/conf "$@"' > /usr/local/sbin/postconf \
-  && chmod +x /usr/local/sbin/postconf
+RUN set -eu ; \
+	zypper -n ar https://download.opensuse.org/repositories/home:/crameleon:/LibertaCasa:/Mail/15.4/home:crameleon:LibertaCasa:Mail.repo ; \
+        zypper --gpg-auto-import-keys -n ref ; \ 
+	zypper -n in --no-recommends bind-utils mariadb-client postfix postfix-mysql redis syslog-ng-redis supervisor ; \
+	zypper -n clean -a ; \
+	printf '#!/usr/bin/bash\n/usr/sbin/postconf -c /opt/postfix/conf "$@"' > /usr/local/sbin/postconf ; \
+	chmod +x /usr/local/sbin/postconf
 
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY syslog-ng.conf /etc/syslog-ng/syslog-ng.conf
@@ -46,17 +18,16 @@ COPY rspamd-pipe-ham /usr/local/bin/rspamd-pipe-ham
 COPY rspamd-pipe-spam /usr/local/bin/rspamd-pipe-spam
 COPY whitelist_forwardinghosts.sh /usr/local/bin/whitelist_forwardinghosts.sh
 COPY stop-supervisor.sh /usr/local/sbin/stop-supervisor.sh
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY entrypoint.sh /usr/local/sbin/entrypoint.sh
 
 RUN chmod +x /opt/postfix.sh \
   /usr/local/bin/rspamd-pipe-ham \
   /usr/local/bin/rspamd-pipe-spam \
-  /usr/local/bin/whitelist_forwardinghosts.sh \
-  /usr/local/sbin/stop-supervisor.sh
-RUN rm -rf /tmp/* /var/tmp/*
+  /usr/local/bin/whitelist_forwardinghosts.sh ; \
+  rm -fr /tmp/*
 
 EXPOSE 588
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]
 
-CMD exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
