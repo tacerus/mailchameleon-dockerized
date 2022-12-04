@@ -1,39 +1,16 @@
-FROM alpine:3.16
-LABEL maintainer "André Peters <andre.peters@servercow.de>"
+FROM bci/bci-base:latest
 
-# Installation
-RUN apk add --update \
-  && apk add --no-cache nagios-plugins-smtp \
-  nagios-plugins-tcp \
-  nagios-plugins-http \
-  nagios-plugins-ping \
-  mariadb-client \
-  curl \
-  bash \
-  coreutils \
-  jq \
-  fcgi \
-  openssl \
-  nagios-plugins-mysql \
-  nagios-plugins-dns \
-  nagios-plugins-disk \
-  bind-tools \
-  redis \
-  perl \
-  perl-net-dns \
-  perl-io-socket-ssl \
-  perl-io-socket-inet6 \
-  perl-socket \
-  perl-socket6 \
-  perl-mime-lite \
-  perl-term-readkey \
-  tini \
-  tzdata \
-  whois \
-  && curl https://raw.githubusercontent.com/mludvig/smtp-cli/v3.10/smtp-cli -o /smtp-cli \
-  && chmod +x smtp-cli
+LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
-COPY watchdog.sh /watchdog.sh
+RUN set -eu ; \
+        zypper -n ar https://download.opensuse.org/repositories/home:/crameleon:/LibertaCasa:/Mail/15.4/home:crameleon:LibertaCasa:Mail.repo ; \
+        zypper --gpg-auto-import-keys -n ref ; \
+	zypper -n in --no-recommends \ 
+		mariadb-client redis jq bind-utils whois smtp-cli \
+		nagios-plugins-tcp nagios-plugins-http nagios-plugins-ping nagios-plugins-mysql nagios-plugins-dns nagios-plugins-disk ; \ 
+	zypper -n clean -a
+
+COPY watchdog.sh /usr/local/bin/watchdog.sh
 COPY check_mysql_slavestatus.sh /usr/lib/nagios/plugins/check_mysql_slavestatus.sh
 
-CMD /watchdog.sh
+CMD /usr/local/bin/watchdog.sh
