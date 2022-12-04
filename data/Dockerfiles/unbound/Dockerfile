@@ -1,4 +1,4 @@
-FROM bci/bci-base:latest
+FROM registry.suse.com/bci/bci-base:latest
 
 LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
@@ -11,6 +11,7 @@ RUN set -eu ; \
 	zypper -n in expect ; \
 	expect /tmp/install ; rm /tmp/install ; \
 	zypper -n clean -a ; \
+	sed -i -e 's/# use-syslog:.*/use-syslog: no/' /etc/unbound/unbound.conf ; \
 	mkdir /hooks
 
 EXPOSE 53/udp 53/tcp
