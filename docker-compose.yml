@@ -2,7 +2,9 @@ version: '2.1'
 services:
 
     unbound-mailcow:
-      image: mailcow/unbound:1.16
+      #image: mailcow/unbound:1.16
+      build:
+        context: data/Dockerfiles/unbound
       environment:
         - TZ=${TZ}
       volumes:
@@ -10,6 +12,8 @@ services:
         - ./data/conf/unbound/unbound.conf:/etc/unbound/unbound.conf:ro,Z
       restart: always
       tty: true
+      cap_add:
+        - SYS_CHROOT
       networks:
         mailcow-network:
           ipv4_address: ${IPV4_NETWORK:-172.22.1}.254
@@ -58,7 +62,9 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.54
+      #image: mailcow/clamd:1.54
+      build:
+        context: data/Dockerfiles/clamd
       restart: always
       depends_on:
         - unbound-mailcow
@@ -76,7 +82,9 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.90
+      #image: mailcow/rspamd:1.90
+      build:
+        context: data/Dockerfiles/rspamd
       stop_grace_period: 30s
       depends_on:
         - dovecot-mailcow
@@ -106,8 +114,9 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.79
-      command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
+      build:
+        context: data/Dockerfiles/phpfpm
+      command: "php-fpm -F -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
         - redis-mailcow
       volumes:
@@ -120,10 +129,10 @@ services:
         - ./data/conf/sogo/:/etc/sogo/:z
         - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
         - ./data/conf/phpfpm/sogo-sso/:/etc/sogo-sso/:z
-        - ./data/conf/phpfpm/php-fpm.d/pools.conf:/usr/local/etc/php-fpm.d/z-pools.conf:Z
-        - ./data/conf/phpfpm/php-conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini:Z
-        - ./data/conf/phpfpm/php-conf.d/upload.ini:/usr/local/etc/php/conf.d/upload.ini:Z
-        - ./data/conf/phpfpm/php-conf.d/other.ini:/usr/local/etc/php/conf.d/zzz-other.ini:Z
+        - ./data/conf/phpfpm/php-fpm.d/pools.conf:/etc/php8/fpm/php-fpm.d/z-pools.conf:Z
+        - ./data/conf/phpfpm/php-conf.d/opcache-recommended.ini:/etc/php8/conf.d/opcache-recommended.ini:Z
+        - ./data/conf/phpfpm/php-conf.d/upload.ini:/etc/php8/conf.d/upload.ini:Z
+        - ./data/conf/phpfpm/php-conf.d/other.ini:/etc/php8/conf.d/zzz-other.ini:Z
         - ./data/conf/dovecot/global_sieve_before:/global_sieve/before:z
         - ./data/conf/dovecot/global_sieve_after:/global_sieve/after:z
         - ./data/assets/templates:/tpls:z
@@ -168,7 +177,9 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.111
+      #image: mailcow/sogo:1.111
+      build:
+        context: data/Dockerfiles/sogo
       environment:
         - DBNAME=${DBNAME}
         - DBUSER=${DBUSER}
@@ -215,7 +226,9 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.20
+      #image: mailcow/dovecot:1.20
+      build:
+        context: data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
       dns:
@@ -295,7 +308,9 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.68
+      #image: mailcow/postfix:1.68
+      build:
+        context: data/Dockerfiles/postfix
       depends_on:
         - mysql-mailcow
       volumes:
@@ -424,7 +439,9 @@ services:
             - acme
 
     netfilter-mailcow:
-      image: mailcow/netfilter:1.49
+      #image: mailcow/netfilter:1.49
+      build:
+        context: data/Dockerfiles/netfilter
       stop_grace_period: 30s
       depends_on:
         - dovecot-mailcow
@@ -447,7 +464,9 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.96
+      #image: mailcow/watchdog:1.96
+      build:
+        context: data/Dockerfiles/watchdog
       dns:
         - ${IPV4_NETWORK:-172.22.1}.254
       tmpfs:
@@ -509,7 +528,9 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.42
+      #image: mailcow/dockerapi:1.42
+      build:
+        context: data/Dockerfiles/dockerapi
       security_opt:
         - label=disable
       restart: always
@@ -527,7 +548,9 @@ services:
             - dockerapi
 
     solr-mailcow:
-      image: mailcow/solr:1.8.1
+      #image: mailcow/solr:1.8.1
+      build:
+        context: data/Dockerfiles/solr
       restart: always
       volumes:
         - solr-vol-1:/opt/solr/server/solr/dovecot-fts/data
@@ -543,18 +566,14 @@ services:
             - solr
 
     olefy-mailcow:
-      image: mailcow/olefy:1.10
+      #image: mailcow/olefy:1.10
+      build:
+        context: data/Dockerfiles/olefy
       restart: always
       environment:
         - TZ=${TZ}
         - OLEFY_BINDADDRESS=0.0.0.0
         - OLEFY_BINDPORT=10055
-        - OLEFY_TMPDIR=/tmp
-        - OLEFY_PYTHON_PATH=/usr/bin/python3
-        - OLEFY_OLEVBA_PATH=/usr/bin/olevba
-        - OLEFY_LOGLVL=20
-        - OLEFY_MINLENGTH=500
-        - OLEFY_DEL_TMP=1
       networks:
         mailcow-network:
           aliases:

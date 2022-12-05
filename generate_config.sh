@@ -203,10 +203,10 @@ DBROOT=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 # For IPv4 leave it as it is: HTTP_BIND= & HTTPS_PORT=
 # For IPv6 see https://mailcow.github.io/mailcow-dockerized-docs/post_installation/firststeps-ip_bindings/
 
-HTTP_PORT=80
+HTTP_PORT=8000
 HTTP_BIND=
 
-HTTPS_PORT=443
+HTTPS_PORT=4430
 HTTPS_BIND=
 
 # ------------------------------
@@ -237,7 +237,7 @@ TZ=${MAILCOW_TZ}
 # Fixed project name
 # Please use lowercase letters only
 
-COMPOSE_PROJECT_NAME=mailcowdockerized
+COMPOSE_PROJECT_NAME=mailchameleondockerized
 
 # Used Docker Compose version
 # Switch here between native (compose plugin) and standalone

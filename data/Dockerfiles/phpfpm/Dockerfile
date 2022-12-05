@@ -1,4 +1,4 @@
-FROM bci/bci-base:latest
+FROM registry.suse.com/bci/bci-base:latest
 
 LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
@@ -8,6 +8,7 @@ RUN set -eu ; \
 	zypper -n --gpg-auto-import-keys ref ; \
 	zypper -n in ImageMagick jq redis mariadb-client \
 		php8-fpm php8-redis php8-memcached php8-APCu php8-imagick php8-intl php8-exif php8-gd php8-mailparse ; \
+	echo 'include=/etc/php8/fpm/php-fpm.d/*.conf' > /etc/php8/fpm/php-fpm.conf ; \
 	mkdir /hooks
 
 COPY entrypoint.sh /usr/local/sbin/

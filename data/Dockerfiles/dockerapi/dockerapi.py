@@ -387,7 +387,7 @@ class GracefulKiller:
 
 def create_self_signed_cert():
     process = subprocess.Popen(
-      "openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout /app/dockerapi_key.pem -out /app/dockerapi_cert.pem -subj /CN=dockerapi/O=mailcow -addext subjectAltName=DNS:dockerapi".split(),
+      "openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout /etc/ssl/private/dockerapi_key.pem -out /etc/ssl/dockerapi_cert.pem -subj /CN=dockerapi/O=mailchameleon -addext subjectAltName=DNS:dockerapi".split(),
       stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=False
     )
     process.wait()
@@ -397,7 +397,7 @@ def startFlaskAPI():
   try:
     ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     ctx.check_hostname = False
-    ctx.load_cert_chain(certfile='/app/dockerapi_cert.pem', keyfile='/app/dockerapi_key.pem')
+    ctx.load_cert_chain(certfile='/etc/ssl/dockerapi_cert.pem', keyfile='/etc/ssl/private/dockerapi_key.pem')
   except:
     print ("Cannot initialize TLS, retrying in 5s...")
     time.sleep(5)

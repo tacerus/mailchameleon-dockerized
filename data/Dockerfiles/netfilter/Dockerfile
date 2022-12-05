@@ -1,4 +1,4 @@
-FROM bci/python:latest
+FROM registry.suse.com/bci/python:latest
 
 LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 

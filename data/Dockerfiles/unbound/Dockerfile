@@ -11,8 +11,7 @@ RUN set -eu ; \
 	zypper -n in expect ; \
 	expect /tmp/install ; rm /tmp/install ; \
 	zypper -n clean -a ; \
-	sed -i -e 's/# use-syslog:.*/use-syslog: no/' /etc/unbound/unbound.conf ; \
-	mkdir /hooks
+	mkdir /hooks /var/lib/unbound/etc /var/lib/unbound/etc/unbound
 
 EXPOSE 53/udp 53/tcp
 

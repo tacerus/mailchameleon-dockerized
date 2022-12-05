@@ -9,7 +9,6 @@ expect {
     exp_continue
   }
   "Choose from above solutions by number or cancel" {
-   #puts "$solution"
    send "$solution\r"
    exp_continue
   }
@@ -17,6 +16,7 @@ expect {
    send "y\r"
    exp_continue
   }
+  "Retrieving:" { exp_continue }
   "Installing:" { exp_continue }
   eof {}
 }

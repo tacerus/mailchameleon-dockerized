@@ -1,4 +1,4 @@
-FROM bci/bci-base:latest
+FROM registry.suse.com/bci/bci-base:latest
 
 LABEL maintainer "Georg Pfuetzenreuter <mail+containers@georg-pfuetzenreuter.net>"
 
