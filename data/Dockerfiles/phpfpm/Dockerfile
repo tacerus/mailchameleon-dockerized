@@ -7,7 +7,7 @@ RUN set -eu ; \
 	zypper ar https://download.opensuse.org/repositories/home:/crameleon:/LibertaCasa:/Mail/15.4/home:crameleon:LibertaCasa:Mail.repo ; \
 	zypper -n --gpg-auto-import-keys ref ; \
 	zypper -n in ImageMagick jq redis mariadb-client \
-		php8-fpm php8-redis php8-memcached php8-APCu php8-imagick php8-intl php8-exif php8-gd php8-mailparse ; \
+		php8-fpm php8-redis php8-memcached php8-APCu php8-imagick php8-intl php8-exif php8-gd php8-mailparse php8-pear php8-pdo php8-mysql php8-curl ; \
 	echo 'include=/etc/php8/fpm/php-fpm.d/*.conf' > /etc/php8/fpm/php-fpm.conf ; \
 	mkdir /hooks
 
